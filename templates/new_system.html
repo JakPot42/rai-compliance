@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Register AI System — {{ app_title }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="/">&#8592; Dashboard</a>
+
+<div class="page-header">
+  <h1>Register New AI System</h1>
+  <p class="subtitle">Describe the AI system you want to assess against DoD RAI principles.</p>
+</div>
+
+<div class="card">
+  <form method="post" action="/systems/new">
+    <div class="form-group">
+      <label for="name">System Name <span class="required">*</span></label>
+      <input type="text" id="name" name="name" required placeholder="e.g. SENTINEL Influence Operations Detection Engine">
+    </div>
+
+    <div class="form-group">
+      <label for="description">System Description <span class="required">*</span></label>
+      <div class="form-hint">What does this AI system do? What decisions does it make or support? Who are the affected individuals?</div>
+      <textarea id="description" name="description" rows="4" placeholder="Describe the AI system's purpose, capabilities, and how it makes or supports decisions..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="system_owner">System Owner / Accountable Official</label>
+      <input type="text" id="system_owner" name="system_owner" placeholder="e.g. Maj. Jane Smith, J2 Intelligence Section">
+    </div>
+
+    <div class="form-group">
+      <label for="intended_users">Intended Users</label>
+      <input type="text" id="intended_users" name="intended_users" placeholder="e.g. Intelligence analysts, SOC operators, compliance staff">
+    </div>
+
+    <div class="form-group">
+      <label for="data_sources">Data Sources</label>
+      <div class="form-hint">What data does the system use at training time or inference time? Where does it come from?</div>
+      <textarea id="data_sources" name="data_sources" rows="3" placeholder="e.g. SEC EDGAR filings, RSS feeds from public media, OFAC SDN list..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="deployment_context">Deployment Context</label>
+      <div class="form-hint">Where and how is the system deployed? Who controls it? What happens to its outputs?</div>
+      <textarea id="deployment_context" name="deployment_context" rows="3" placeholder="e.g. Web app on Render. Analyst reviews all outputs before action. DEMO_MODE enabled..."></textarea>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;margin-top:1.25rem">
+      <button type="submit" class="btn btn-primary">Register System &amp; Characterize &#8594;</button>
+      <a href="/" class="btn btn-outline">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<div class="info-box" style="margin-top:1rem">
+  After registration, Claude will analyze the system description to identify its autonomy level and the highest-risk RAI principle. You will then assess all 20 criteria.
+</div>
+{% endblock %}

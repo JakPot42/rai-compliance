@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ system.name }} — {{ app_title }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="/">&#8592; Dashboard</a>
+
+<div class="page-header">
+  <h1>{{ system.name }}</h1>
+  {% if system.system_owner %}
+  <p class="subtitle">{{ system.system_owner }}</p>
+  {% endif %}
+</div>
+
+<!-- System header bar -->
+<div class="system-header-bar">
+  {% if system.autonomy_level %}
+  <div class="header-stat">
+    <span class="header-stat-label">Autonomy Level</span>
+    <span class="badge badge-autonomy-{{ system.autonomy_level | lower }}">{{ system.autonomy_level }}</span>
+  </div>
+  <div class="header-stat">
+    <span class="header-stat-label">Highest Risk</span>
+    <span style="font-weight:700;color:#1a1a2e">{{ system.highest_risk_principle }}</span>
+  </div>
+  <div class="header-stat">
+    <span class="header-stat-label">RAI Score</span>
+    <span style="font-weight:700;color:#1a1a2e">{{ system.rai_score }}%</span>
+  </div>
+  <div class="header-stat">
+    <span class="header-stat-label">Status</span>
+    <span class="rai-status rai-{{ system.rai_status | lower | replace(' ', '-') }}">{{ system.rai_status }}</span>
+  </div>
+  {% else %}
+  <div style="color:#6b7a90;font-size:0.9rem">No risk characterization yet.</div>
+  {% endif %}
+
+  <div class="header-actions">
+    {% if system.autonomy_level %}
+    <a href="/systems/{{ system.id }}/report" class="btn btn-primary">View RAI Report</a>
+    {% endif %}
+    <a href="/systems/{{ system.id }}/characterize" class="btn btn-outline">Re-Characterize</a>
+  </div>
+</div>
+
+<!-- Rationale -->
+{% if system.characterization_rationale %}
+<div class="card" style="margin-bottom:1rem">
+  <h2>RAI Risk Characterization</h2>
+  <div class="rationale-box">{{ system.characterization_rationale }}</div>
+  {% if system.priority_criteria %}
+  <div style="margin-top:0.75rem;font-size:0.85rem;color:#4a5568">
+    <strong>Priority criteria:</strong>
+    {% set pc = system.priority_criteria | fromjson if system.priority_criteria else [] %}
+    {% for cid in pc %}
+    <span class="badge badge-priority" style="margin-left:0.3rem">{{ cid }}</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Progress summary by principle -->
+{% if system.autonomy_level %}
+<div class="card">
+  <h2>Progress by Principle</h2>
+  <div class="principle-grid">
+    {% for code, label in rai_principles.items() %}
+    {% set ps = principle_summary.get(code, {}) %}
+    {% set total = ps.get('total', 4) %}
+    {% set done = ps.get('met', 0) + ps.get('not_applicable', 0) %}
+    {% set pct = (done / total * 100) | int if total else 0 %}
+    <div class="principle-card">
+      <div class="principle-header">
+        <span class="principle-code">{{ code }}</span>
+        <span class="principle-name">{{ label }}</span>
+        <span class="principle-pct">{{ pct }}%</span>
+      </div>
+      <div class="progress-bar-wrap" style="height:8px;margin-top:0.4rem">
+        <div class="progress-bar" style="width:{{ pct }}%"></div>
+      </div>
+      <div class="principle-stats">
+        <span class="stat stat-green">{{ ps.get('met', 0) }} met</span>
+        <span class="stat stat-orange">{{ ps.get('partial', 0) }} partial</span>
+        <span class="stat stat-red">{{ ps.get('not_addressed', 0) }} open</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Criteria by principle -->
+{% if system.autonomy_level %}
+{% for code, label in rai_principles.items() %}
+{% set group = principle_groups.get(code, []) %}
+{% if group %}
+<div class="family-section">
+  <div class="family-header" onclick="toggleSection('{{ code }}')">
+    <span class="family-code">{{ code }}</span>
+    <span class="family-name">{{ label }}</span>
+    <span class="family-count">{{ group | length }} criteria</span>
+    <span class="family-toggle" id="toggle-{{ code }}">&#9660;</span>
+  </div>
+  <div class="family-controls" id="section-{{ code }}">
+    {% for a in group %}
+    {% set crit = criteria_lookup.get(a.criterion_id) %}
+    <a class="control-row {% if a.criterion_id in priority_set %}priority-row{% endif %}" href="/systems/{{ system.id }}/criteria/{{ a.criterion_id }}">
+      <span class="control-id">{{ a.criterion_id }}</span>
+      <span class="control-title">{{ crit.title if crit else a.criterion_id }}</span>
+      {% if a.criterion_id in priority_set %}<span class="priority-flag">&#9888; Priority</span>{% endif %}
+      {% if a.generated_narrative %}<span class="has-narrative">&#128196; narrative</span>{% endif %}
+      <span class="control-status-badge {{ a.status_css }}">{{ a.status_label }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% else %}
+<div class="card">
+  <p style="color:#6b7a90">No criteria loaded yet. Run the RAI characterization to populate the 20-criteria checklist.</p>
+  <a href="/systems/{{ system.id }}/characterize" class="btn btn-primary" style="margin-top:0.75rem">Run RAI Characterization &#8594;</a>
+</div>
+{% endif %}
+
+<script>
+function toggleSection(code) {
+  const section = document.getElementById('section-' + code);
+  const toggle = document.getElementById('toggle-' + code);
+  if (section.classList.contains('collapsed')) {
+    section.classList.remove('collapsed');
+    toggle.textContent = '▼';
+  } else {
+    section.classList.add('collapsed');
+    toggle.textContent = '▶';
+  }
+}
+</script>
+{% endblock %}

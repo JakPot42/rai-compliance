@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ crit.id }} — {{ system.name }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="/systems/{{ system.id }}">&#8592; {{ system.name }}</a>
+
+<div class="page-header">
+  <h1>
+    <span class="control-link">{{ crit.id }}</span>
+    — {{ crit.title }}
+    {% if is_priority %}<span class="priority-flag">&#9888; Priority Criterion</span>{% endif %}
+  </h1>
+  <p class="subtitle">{{ rai_principles.get(crit.principle) }} Principle</p>
+</div>
+
+{% if error %}
+<div class="alert alert-error">&#9888; {{ error }}</div>
+{% endif %}
+
+<!-- Criterion description -->
+<div class="card">
+  <h2>Criterion Requirement</h2>
+  <p class="control-requirement-text">{{ crit.description }}</p>
+
+  {% if crit.guidance %}
+  <div class="rationale-box" style="margin-top:1rem">
+    <strong>Implementation Guidance:</strong><br>{{ crit.guidance }}
+  </div>
+  {% endif %}
+
+  {% if crit.portfolio_example %}
+  <div class="info-box" style="margin-top:0.75rem">
+    <strong>Portfolio example:</strong> {{ crit.portfolio_example }}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Current status -->
+<div class="card">
+  <h2>Assessment Status</h2>
+  <form method="post" action="/systems/{{ system.id }}/criteria/{{ crit.id }}/status">
+    <div class="status-grid">
+      {% for val, label in criterion_statuses.items() %}
+      <label class="status-option status-option-{{ val }}">
+        <input type="radio" name="status" value="{{ val }}"
+          {% if assessment.status == val %}checked{% endif %}>
+        <span>{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+
+    <div class="form-group" style="margin-top:1rem">
+      <label for="implementation_notes">Implementation Notes</label>
+      <div class="form-hint">Describe how this criterion is addressed — or why it cannot be met. These notes are used by Claude to draft the compliance narrative.</div>
+      <textarea id="implementation_notes" name="implementation_notes" rows="4">{{ assessment.implementation_notes or "" }}</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Status</button>
+  </form>
+</div>
+
+<!-- Generate narrative -->
+<div class="card">
+  <h2>Compliance Narrative</h2>
+  {% if assessment.generated_narrative %}
+  <div class="narrative-box">{{ assessment.generated_narrative }}</div>
+  <p style="font-size:0.8rem;color:#8a9bb0;margin-top:0.5rem">&#9432; AI-generated narrative. Review and edit as needed before including in formal documentation.</p>
+  <form method="post" action="/systems/{{ system.id }}/criteria/{{ crit.id }}/generate" style="margin-top:0.75rem">
+    <input type="hidden" name="implementation_notes" value="{{ assessment.implementation_notes or '' }}">
+    <button type="submit" class="btn btn-outline">&#8635; Regenerate Narrative</button>
+  </form>
+  {% else %}
+  <p style="color:#6b7a90;font-size:0.9rem;margin-bottom:0.75rem">No narrative generated yet. Add implementation notes above, then generate.</p>
+  <form method="post" action="/systems/{{ system.id }}/criteria/{{ crit.id }}/generate">
+    <div class="form-group">
+      <label for="gen_notes">Additional Context (optional)</label>
+      <textarea id="gen_notes" name="implementation_notes" rows="3" placeholder="Any specific details about how this system addresses this criterion...">{{ assessment.implementation_notes or "" }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-secondary">Generate Compliance Narrative via Claude</button>
+  </form>
+  {% endif %}
+</div>
+
+<!-- Navigation -->
+<div style="display:flex;justify-content:space-between;margin-top:0.5rem">
+  <a href="/systems/{{ system.id }}" class="btn btn-outline">&#8592; All Criteria</a>
+  <a href="/systems/{{ system.id }}/report" class="btn btn-outline">View RAI Report &#8594;</a>
+</div>
+{% endblock %}

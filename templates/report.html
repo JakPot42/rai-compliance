@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}RAI Assessment Report — {{ system.name }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="/systems/{{ system.id }}">&#8592; {{ system.name }}</a>
+
+<div class="page-header">
+  <h1>RAI Assessment Report</h1>
+  <p class="subtitle">{{ system.name }}</p>
+</div>
+
+{% if demo_mode %}
+<div style="text-align:center;font-size:0.8rem;font-weight:700;letter-spacing:0.12em;color:#7f4f24;border:2px solid #7f4f24;padding:6px;border-radius:4px;margin-bottom:1.25rem">
+  DEMONSTRATION ONLY — NOT FOR OPERATIONAL USE
+</div>
+{% endif %}
+
+<!-- Overall score banner -->
+<div class="risk-banner rai-banner-{{ system.rai_status | lower | replace(' ', '-') }}">
+  <div>
+    <div class="risk-score-big">{{ system.rai_score }}<span>%</span></div>
+    <div style="font-size:0.85rem;opacity:0.85">RAI Compliance Score</div>
+  </div>
+  <div style="flex:1;padding-left:1.5rem">
+    <div style="font-size:1.2rem;font-weight:700">{{ system.rai_status }}</div>
+    <div style="font-size:0.88rem;opacity:0.85;margin-top:0.25rem">{{ system.name }}</div>
+    {% if system.system_owner %}
+    <div style="font-size:0.83rem;opacity:0.75">{{ system.system_owner }}</div>
+    {% endif %}
+    {% if system.autonomy_level %}
+    <div style="margin-top:0.5rem;font-size:0.83rem;opacity:0.9">
+      Autonomy: <strong>{{ system.autonomy_level }}</strong>
+      &nbsp;&mdash;&nbsp; Highest Risk: <strong>{{ system.highest_risk_principle }}</strong>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Status breakdown -->
+<div class="card">
+  <h2>Criteria Summary</h2>
+  <div class="status-breakdown">
+    <div class="breakdown-item breakdown-met">
+      <div class="breakdown-count">{{ met | length }}</div>
+      <div class="breakdown-label">Met</div>
+    </div>
+    <div class="breakdown-item breakdown-partial">
+      <div class="breakdown-count">{{ partial | length }}</div>
+      <div class="breakdown-label">Partial</div>
+    </div>
+    <div class="breakdown-item breakdown-not-addressed">
+      <div class="breakdown-count">{{ not_addressed | length }}</div>
+      <div class="breakdown-label">Not Addressed</div>
+    </div>
+    <div class="breakdown-item breakdown-na">
+      <div class="breakdown-count">{{ na | length }}</div>
+      <div class="breakdown-label">Not Applicable</div>
+    </div>
+    <div class="breakdown-item" style="background:#f0f4f8;color:#1a1a2e">
+      <div class="breakdown-count">20</div>
+      <div class="breakdown-label">Total Criteria</div>
+    </div>
+  </div>
+</div>
+
+<!-- Per-principle breakdown -->
+<div class="card">
+  <h2>Results by Principle</h2>
+  <div class="table-wrap">
+    <table class="supplier-table">
+      <thead>
+        <tr>
+          <th>Principle</th>
+          <th>Met</th>
+          <th>Partial</th>
+          <th>Not Addressed</th>
+          <th>N/A</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for code, label in rai_principles.items() %}
+        {% set ps = principle_summary.get(code, {}) %}
+        {% set total = ps.get('total', 4) %}
+        {% set done = ps.get('met', 0) + ps.get('not_applicable', 0) %}
+        {% set pct = (done / total * 100) | int if total else 0 %}
+        <tr>
+          <td><strong>{{ code }}</strong> — {{ label }}</td>
+          <td style="color:#1a7a40;font-weight:600">{{ ps.get('met', 0) }}</td>
+          <td style="color:#c87000;font-weight:600">{{ ps.get('partial', 0) }}</td>
+          <td style="color:#a02020;font-weight:600">{{ ps.get('not_addressed', 0) }}</td>
+          <td style="color:#888">{{ ps.get('not_applicable', 0) }}</td>
+          <td>
+            <div class="progress-row">
+              <div class="progress-bar-wrap" style="width:80px">
+                <div class="progress-bar" style="width:{{ pct }}%"></div>
+              </div>
+              <span class="progress-label">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Gaps / POA&M -->
+{% if not_addressed %}
+<div class="card card-danger">
+  <h2>&#9888; Gaps — Criteria Not Addressed ({{ not_addressed | length }})</h2>
+  <p style="font-size:0.88rem;color:#6b7a90;margin-bottom:0.75rem">These criteria require implementation before the system can be considered RAI-compliant.</p>
+  <table class="supplier-table">
+    <thead>
+      <tr>
+        <th>Criterion</th>
+        <th>Title</th>
+        <th>Principle</th>
+        <th>Priority</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in not_addressed %}
+      {% set crit = criteria_lookup.get(a.criterion_id) %}
+      <tr>
+        <td><a href="/systems/{{ system.id }}/criteria/{{ a.criterion_id }}" class="control-link">{{ a.criterion_id }}</a></td>
+        <td>{{ crit.title if crit else a.criterion_id }}</td>
+        <td>{{ rai_principles.get(a.principle_code, a.principle_code) }}</td>
+        <td>{% if a.criterion_id in priority_set %}<span class="priority-flag">&#9888; High</span>{% else %}&mdash;{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<!-- Partial implementations -->
+{% if partial %}
+<div class="card">
+  <h2>&#8764; Partial Implementations ({{ partial | length }})</h2>
+  <p style="font-size:0.88rem;color:#6b7a90;margin-bottom:0.75rem">These criteria are partially addressed. Review implementation notes and complete remaining gaps.</p>
+  <div class="control-pills">
+    {% for a in partial %}
+    <a href="/systems/{{ system.id }}/criteria/{{ a.criterion_id }}" class="control-pill pill-partial">
+      {{ a.criterion_id }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Met criteria -->
+{% if met %}
+<div class="card">
+  <h2>&#10003; Criteria Met ({{ met | length }})</h2>
+  <div class="control-pills">
+    {% for a in met %}
+    <a href="/systems/{{ system.id }}/criteria/{{ a.criterion_id }}" class="control-pill pill-implemented">
+      {{ a.criterion_id }}
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Rationale -->
+{% if system.characterization_rationale %}
+<div class="card">
+  <h2>RAI Risk Characterization Rationale</h2>
+  <div class="rationale-box">{{ system.characterization_rationale }}</div>
+  <p style="font-size:0.78rem;color:#8a9bb0;margin-top:0.5rem">&#9432; AI-generated characterization. Autonomy level and risk principle determined by Claude based on system description. Human reviewer should validate before formal use.</p>
+</div>
+{% endif %}
+
+<div style="margin-top:1rem;text-align:center;font-size:0.82rem;color:#8a9bb0">
+  RAI Compliance Assistant &mdash; DoD AI Ethical Principles (2020) &mdash; DEMONSTRATION ONLY
+</div>
+{% endblock %}

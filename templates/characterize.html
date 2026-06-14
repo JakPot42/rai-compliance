@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}RAI Risk Characterization — {{ system.name }}{% endblock %}
+
+{% block content %}
+<a class="back-link" href="/systems/{{ system.id }}">&#8592; {{ system.name }}</a>
+
+<div class="page-header">
+  <h1>RAI Risk Characterization</h1>
+  <p class="subtitle">Claude analyzes your system description to identify autonomy level and highest-risk principle.</p>
+</div>
+
+{% if error %}
+<div class="alert alert-error">&#9888; {{ error }}</div>
+{% endif %}
+
+<div class="card">
+  <h2>{{ system.name }}</h2>
+  {% if system.description %}
+  <p style="color:#4a5568;font-size:0.93rem;margin-bottom:1rem">{{ system.description }}</p>
+  {% endif %}
+  <div class="form-hint">
+    Claude will read your system description and determine:
+    <ul style="margin-top:0.4rem;padding-left:1.25rem">
+      <li>Autonomy level (Low / Medium / High / Critical)</li>
+      <li>Highest-risk RAI principle for this system</li>
+      <li>Top priority criteria to address first</li>
+    </ul>
+    This characterization does not determine compliance — it gives context for your 20-criteria assessment. You can revise individual criterion statuses at any time.
+  </div>
+
+  <form method="post" action="/systems/{{ system.id }}/characterize">
+    <div style="margin-top:1.25rem;display:flex;gap:0.75rem">
+      <button type="submit" class="btn btn-primary">Run RAI Characterization via Claude &#8594;</button>
+      <a href="/systems/{{ system.id }}" class="btn btn-outline">Skip (assess manually)</a>
+    </div>
+  </form>
+</div>
+
+<div class="info-cards">
+  <div class="info-card">
+    <h3>Low Autonomy</h3>
+    <p>Human makes all decisions. AI provides information or analysis only. Lowest RAI risk — oversight is inherent.</p>
+  </div>
+  <div class="info-card">
+    <h3>Medium Autonomy</h3>
+    <p>AI recommends actions. Human reviews and approves each recommendation before it takes effect.</p>
+  </div>
+  <div class="info-card">
+    <h3>High Autonomy</h3>
+    <p>AI acts autonomously within a defined scope. Human oversight is periodic, not per-decision.</p>
+  </div>
+  <div class="info-card">
+    <h3>Critical Autonomy</h3>
+    <p>AI acts autonomously in a high-stakes domain. Errors can cause serious harm. Highest RAI scrutiny required.</p>
+  </div>
+</div>
+{% endblock %}

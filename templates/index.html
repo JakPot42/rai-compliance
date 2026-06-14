@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ app_title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>RAI Systems Dashboard</h1>
+  <p class="subtitle">Track Responsible AI compliance across all assessed AI systems.</p>
+</div>
+
+<div class="toolbar">
+  <a href="/systems/new" class="btn btn-primary">&#43; New AI System</a>
+  <form method="post" action="/seed" style="display:inline">
+    <button type="submit" class="btn btn-secondary">Load Demo Systems</button>
+  </form>
+</div>
+
+{% if systems %}
+<div class="systems-grid">
+  {% for s in systems %}
+  <a href="/systems/{{ s.id }}" class="system-card">
+    <div class="system-card-top">
+      <div>
+        <div class="system-name">{{ s.name }}</div>
+        {% if s.system_owner %}
+        <div class="system-owner">{{ s.system_owner }}</div>
+        {% endif %}
+      </div>
+      {% if s.autonomy_level %}
+      <span class="badge badge-autonomy-{{ s.autonomy_level | lower }}">{{ s.autonomy_level }}</span>
+      {% else %}
+      <span class="badge badge-pending">Uncharacterized</span>
+      {% endif %}
+    </div>
+
+    {% if s.autonomy_level %}
+    <div class="progress-row">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:{{ s.rai_score }}%"></div>
+      </div>
+      <span class="progress-label">{{ s.rai_score }}% compliant</span>
+    </div>
+
+    <div class="system-stats">
+      <span class="stat stat-green">&#10003; {{ s.met_count }} met</span>
+      <span class="stat stat-orange">&#8764; {{ s.partial_count }} partial</span>
+      <span class="stat stat-red">&#9675; {{ s.not_addressed_count }} not addressed</span>
+      <span class="stat stat-grey">{{ s.not_applicable_count }} N/A</span>
+    </div>
+
+    <div class="rai-status rai-{{ s.rai_status | lower | replace(' ', '-') }}">
+      {{ s.rai_status }}
+    </div>
+    {% else %}
+    <div class="system-uncategorized">Click to begin RAI risk characterization &#8594;</div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <p style="font-size:1.1rem;font-weight:600">No AI systems registered yet.</p>
+  <p>Register a new system or load the demo systems to get started.</p>
+  <div style="margin-top:1.5rem;display:flex;gap:1rem;justify-content:center">
+    <a href="/systems/new" class="btn btn-primary">&#43; New AI System</a>
+    <form method="post" action="/seed">
+      <button type="submit" class="btn btn-secondary">Load Demo Systems</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="info-cards">
+  <div class="info-card">
+    <h3>&#128737; What are DoD RAI Principles?</h3>
+    <p>The DoD's five AI Ethical Principles (2020): <strong>Responsible</strong>, <strong>Equitable</strong>, <strong>Traceable</strong>, <strong>Reliable</strong>, <strong>Governable</strong>. Required for all DoD AI acquisition and deployment per CDAO RAI guidance.</p>
+  </div>
+  <div class="info-card">
+    <h3>&#128203; What does this tool assess?</h3>
+    <p>Twenty criteria derived from the five principles. For each criterion, you document implementation status, add notes, and optionally generate a Claude-drafted compliance narrative — the same pattern as NIST 800-53 SSP writing.</p>
+  </div>
+  <div class="info-card">
+    <h3>&#9878; How is Claude used here?</h3>
+    <p>Claude drafts compliance narratives only. The assessment determination (Met / Partial / Not Addressed) is made by a human. Claude never makes the compliance determination — that's the pattern all 7 portfolio projects follow, and the subject this tool makes explicit.</p>
+  </div>
+</div>
+{% endblock %}
