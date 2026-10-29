@@ -103,7 +103,6 @@ Project 9 of the JakPot42 defense AI portfolio. Companion projects:
 
 - [SEAD 3 Auditor](https://github.com/JakPot42/sead3-auditor) — Personnel security compliance
 - [SAM.gov Agent](https://github.com/JakPot42/sam-acquisition-agent) — Acquisition intelligence
-- [FriendShore](https://github.com/JakPot42/friendshore-supply-chain) — Supply chain risk
 - [ATO Accelerator](https://github.com/JakPot42/ato-accelerator) — NIST 800-53 / RMF compliance
 - [SENTINEL](https://github.com/JakPot42/sentinel-io-engine) — Influence operations detection
 - [GhostTrace](https://github.com/JakPot42/ghosttrace) — Hidden ownership & shell company tracing
